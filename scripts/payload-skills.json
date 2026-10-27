@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "prefix": "helm-workflow-",
+  "whitelist": [
+    "systematic-debugging",
+    "gitnexus-setup",
+    "gitnexus-cli",
+    "gitnexus-exploring",
+    "gitnexus-impact-analysis",
+    "gitnexus-debugging",
+    "gitnexus-guide"
+  ]
+}

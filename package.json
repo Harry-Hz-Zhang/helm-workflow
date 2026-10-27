@@ -1,0 +1,70 @@
+{
+  "name": "helm-workflow",
+  "version": "0.0.1",
+  "description": "Human-gated Engineering Lifecycle Method — skill + 宿主适配 + 安装器",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "keywords": [
+    "helm",
+    "workflow",
+    "openspec",
+    "spec-driven-development",
+    "tdd",
+    "ai-agent",
+    "skill",
+    "claude-code",
+    "cursor",
+    "codex"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Harry-Hz-Zhang/helm-workflow.git"
+  },
+  "homepage": "https://github.com/Harry-Hz-Zhang/helm-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/Harry-Hz-Zhang/helm-workflow/issues"
+  },
+  "engines": { "node": ">=20.19.0" },
+  "bin": {
+    "helm-workflow": "scripts/cli.mjs",
+    "helm-wf": "scripts/cli.mjs"
+  },
+  "files": [
+    "scripts/*.mjs",
+    "scripts/lib/",
+    "scripts/hosts.json",
+    "scripts/payload-skills.json",
+    "scripts/legacy-cleanup.json",
+    "skills/",
+    "agents/",
+    "!agents/README.md",
+    "commands/",
+    ".agents/",
+    ".claude/",
+    ".cursor/",
+    ".opencode/",
+    ".codex/",
+    ".github/prompts/",
+    ".github/instructions/",
+    "templates/",
+    "references/",
+    "helm-workflow.local.example.yaml",
+    "install.sh",
+    "install.ps1",
+    "AGENTS.md",
+    "INSTALLATION.md",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "THIRD-PARTY-NOTICES.md"
+  ],
+  "scripts": {
+    "test": "node --test scripts/test/*.test.mjs",
+    "verify": "node scripts/verify.mjs",
+    "prepublishOnly": "npm test && node scripts/verify.mjs",
+    "pack:check": "npm pack --dry-run",
+    "install:local": "node scripts/cli.mjs install --target auto --location local --yes",
+    "check": "node scripts/cli.mjs check --all"
+  }
+}

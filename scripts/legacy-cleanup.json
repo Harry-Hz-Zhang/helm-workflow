@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "helm-v0.1-flat-commands",
+      "reason": "早期扁平布局曾把命令写在 commands/ 根下",
+      "paths": ["commands/helm-*.md"],
+      "match": "glob"
+    },
+    {
+      "id": "helm-v0.1-manual-skills",
+      "reason": "早期版本手工复制 skill 到宿主根",
+      "paths": ["skills/helm-workflow-*/", "skills/systematic-debugging/"],
+      "match": "glob"
+    },
+    {
+      "id": "helm-v0.1-version-file",
+      "reason": "旧版版本文件（无 JSON 结构）",
+      "paths": [".helm-version.txt"],
+      "match": "exact"
+    }
+  ]
+}

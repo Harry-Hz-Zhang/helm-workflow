@@ -1,0 +1,98 @@
+# install 会拷贝到 `<AGENT_DIR>/helm-workflow.local.example.yaml`（示例，每次 install 刷新）
+# 生效配置：`<AGENT_DIR>/helm-workflow.local.yaml`
+#   - 首次 install 若不存在，自动从本文件拷贝创建
+#   - 已存在则保留不动（install 不会覆盖用户配置）
+
+# Apply/Fix 阶段 per-task 是否自动 commit（默认 false）
+# true  → 每个 task review 通过 + 构建 exit code 0 后由工作流自动 `git commit`；
+#         S1 启动前要求工作区干净；S6 校验 diff 仅含当前 task 声明文件
+# false → 工作流不动 git index，不 commit、不打断用户：
+#         · 不在 task 间提示用户 commit
+#         · 不在下一 task 启动前校验工作区干净
+#         · 不在 S6 校验 diff 范围
+#         tasks.md / log.md / state 仍正常回写；commit 时机完全由用户决定
+# 任一取值下，工作流都禁止自动 `git push`。
+auto_commit: false
+
+# Commit message 规范说明（自由文本，默认空）
+# 仅在 auto_commit: true 时生效；auto_commit: false 时工作流不 commit，此项被忽略。
+# - 留空：implementer 根据 diff 与 task 内容自由生成 message
+# - 填写：将本字段原文作为约束传给 implementer，由其按团队规范产出 message
+# 示例（任选其一或自行编写）：
+#   commit_message_guidance: |
+#     使用 Conventional Commits：<type>(<scope>): <subject>
+#     type 限定 feat / fix / refactor / docs / chore / test，主语用中文。
+#   commit_message_guidance: |
+#     标题：[<Jira 号>] <动词开头的中文简述>
+#     正文：列出主要变更点，每点一行。
+#   commit_message_guidance: |
+#     首行：feat[<分支名>]<change-name> <中文简述>
+#     正文：可空。
+commit_message_guidance: ""
+
+# Feature 目录日期粒度（默认 "YYYY"）
+# 控制 features/ 下日期前缀子目录的粒度：
+#   "YYYY"   → features/2026/20260715_feature-name/
+#   "YYYYMM" → features/2026/202607/20260715_feature-name/
+# 团队年千级 feature 时建议设为 "YYYYMM" 以降低单目录文件数。
+# 注意：存量 feature 不受影响；建议新建 workspace 时统一设定。
+feature_date_granularity: "YYYY"
+
+# CodeGraph 索引初始化（默认 true）
+# true  → init Phase 3 对 workspace 中每个项目执行 codegraph init -i
+# false → 跳过 CodeGraph 索引初始化
+# 消费位置：skills/helm-workflow-init/SKILL.md（Bind 第 6 步 CodeGraph 触发处，锚点 `6. **CodeGraph**`）
+codegraph_init: true
+
+# ── 并发控制 ──
+# git clone 最大并发数（默认 2）
+# 消费位置：skills/helm-workflow-init/SKILL.md（Bind 第 4 步 `4. **执行顺序**` 与 S2 clone 步骤 `2. 仅有 git URL`）
+clone_max_concurrency: 2
+# git clone --depth（默认 1，控制浅克隆深度）
+# 消费位置：skills/helm-workflow-init/SKILL.md（S2 clone 步骤 `2. 仅有 git URL`）
+clone_depth: 1
+# 项目分析探索子任务最大并发数（默认 5）
+# 消费位置：skills/helm-workflow-explore/SKILL.md（S2 决策树提取并发上限）
+explore_max_concurrency: 5
+# codegraph init 最大并发数（默认 2）
+# 消费位置：skills/helm-workflow-init/SKILL.md（S2b 并发度上限，锚点 `- 并发度 ≤ 2`）
+codegraph_max_concurrency: 2
+
+# ── 项目画像（YAML 顶层键 profile）──────────────────────────────────────────
+# 真源：项目画像 23 键（键名与默认值见下）。
+# 加载顺序（后者覆盖前者，逐键合并，不整体替换）：
+#   内置默认表 → `helm-profile.yaml` → 本文件的画像段 → 本文件的 profile_override 段
+# 缺键不报错：按下列"缺失时默认"生效，并在 log 留痕（格式 `<key> = <default> (default applied)`）。
+# 同名键优先级：本文件顶层键（v1 存量，如 feature_date_granularity）> 画像段；profile_override 只覆盖画像段。
+# 以下整段默认注释；启用时取消注释并改成本项目的真实值。
+#
+# profile:
+#   profile_version: 1                                        # 缺失时默认：1
+#   project:
+#     name: order-platform                                    # 缺失时默认：项目根目录名
+#     kind: service                                           # 缺失时默认：service（service/library/web/mobile/data/infra/docs）
+#     language: java                                          # 缺失时默认：unknown（java/node/python/go/rust/dotnet/multi/unknown）
+#   build_command: "mvn -q -DskipTests package"                # 缺失时默认：null（跳过编译证据）
+#   test_command: "mvn -q test"                                # 缺失时默认：null（跳过 UT 证据）
+#   lint_command: "mvn -q checkstyle:check"                    # 缺失时默认：null（不产出 lint 证据，不扣分）
+#   artifact_command: "mvn -q -DskipTests package"             # 缺失时默认：null（跳过产物证据）
+#   source_roots: ["src/main/java"]                            # 缺失时默认：按 language 推导；unknown → ["."]
+#   test_roots: ["src/test/java"]                              # 缺失时默认：按 language 推导；unknown → ["."]
+#   symbol_locator: jvm                                        # 缺失时默认：按 language 推导（java→jvm；python/go/rust/dotnet→dotted；node/multi→path；unknown→none）
+#   symbol_pattern: "\\b[A-Z][\\w$]*#\\w+\\b"                  # 缺失时默认：取 symbol_locator 的预设正则
+#   min_scenarios:                                             # 缺失时默认：用内置默认表
+#     code: 5
+#     refactor: 3
+#   verification_types: [unit, integration, contract]          # 缺失时默认：按 project.kind 推导
+#   require_tests_per_task: true                               # 缺失时默认：按 project.kind 推导
+#   review_dimensions: [spec, quality, security]               # 缺失时默认：[spec, quality]
+#   spec_source: openspec                                      # 缺失时默认：openspec（openspec/adr/issues/none）
+#   change_root: .openspec/changes                             # 缺失时默认：.openspec/changes（本仓约定）；spec_source != openspec → helm/changes
+#   repo_mode: workbench                                       # 缺失时默认：auto（存在 <state_dir>/repos.links.yaml → workbench，否则 single）
+#   target_repos: [order-service, order-mock]                 # 缺失时默认：single → [self]；workbench → [] 并硬停
+#   state_dir: .state                                          # 缺失时默认：.state
+#   evidence_style: per-task                                   # 缺失时默认：per-task；unifiedVerifyRequired: true → unified
+#   feature_date_granularity: "YYYY"                           # 缺失时默认：YYYY（YYYY/YYYYMM/none）
+#
+# profile_override:                                            # 本机临时覆盖：同名键逐层覆盖画像段（不入库）
+#   build_command: null

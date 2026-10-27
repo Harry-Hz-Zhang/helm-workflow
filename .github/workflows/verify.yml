@@ -1,0 +1,39 @@
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: ${{ matrix.os }} / node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['20.19.0', '22.x']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Structure and evidence checks
+        run: node scripts/verify.mjs
+
+      # 不写 glob：Windows runner 默认 shell 是 PowerShell，不会为原生程序展开 *，
+      # 且 Node 20 的 --test 不接受目录/通配符参数会直接报错。用 runner 自己的脚本枚举。
+      - name: Unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(git ls-files 'scripts/test/*.test.mjs')
+          echo "$files"
+          node --test $files

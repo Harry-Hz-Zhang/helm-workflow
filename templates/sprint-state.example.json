@@ -1,0 +1,17 @@
+{
+  "change_name": "<change-name>",
+  "started_at": "2026-01-01T00:00:00Z",
+  "current_task_index": 0,
+  "completed_tasks": [],
+  "failed_reviews": [],
+  "checkpoints": [
+    {
+      "task_index": 1,
+      "task_id": "task-1",
+      "commit_hash": "abc123",
+      "at": "2026-01-01T01:00:00Z"
+    }
+  ],
+  "design_review_rounds": 2,
+  "design_review_passed": true
+}

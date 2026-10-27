@@ -1,0 +1,78 @@
+#!/usr/bin/env sh
+# HELM 源仓 pre-push 护栏：结构与证据缺一不可。
+# 启用：git config core.hooksPath .githooks
+# 绕过（仅紧急）：git push --no-verify（须在 PR 描述里写明原因）
+set -u
+
+fail=0
+say() { printf '[pre-push] %s\n' "$*"; }
+bad() { printf '[pre-push] FAIL %s\n' "$*" >&2; fail=1; }
+
+# ---- 1. 结构护栏：skills / agents / templates / references / 六套薄壳 ----
+if ! node scripts/verify.mjs >/tmp/helm-pre-push-verify.log 2>&1; then
+  bad "node scripts/verify.mjs 未通过（详见 /tmp/helm-pre-push-verify.log）"
+  tail -n 20 /tmp/helm-pre-push-verify.log >&2 || true
+else
+  say "verify OK"
+fi
+
+# ---- 2. 单测（存在才跑）----
+if [ -d scripts/test ]; then
+  if ! node --test scripts/test/*.test.mjs >/tmp/helm-pre-push-test.log 2>&1; then
+    bad "node --test 未通过（详见 /tmp/helm-pre-push-test.log）"
+    tail -n 30 /tmp/helm-pre-push-test.log >&2 || true
+  else
+    say "tests OK"
+  fi
+fi
+
+# ---- 3. 证据护栏：阶段 skill 必须带加载契约与证据段 ----
+# 名单的唯一真源是 scripts/lib/host-paths.mjs 的 STAGES；横切 skill（router、git-discipline、
+# reverse-sync、design-review、review-implementation）不在其中，不应要求加载契约指针。
+stage_list=$(node -e "import('./scripts/lib/host-paths.mjs').then(m=>console.log(m.STAGES.map(s=>'helm-workflow-'+s).join(' ')))" 2>/dev/null)
+if [ -z "$stage_list" ]; then
+  bad "无法从 scripts/lib/host-paths.mjs 解析阶段名单"
+  stage_list=""
+fi
+
+missing_contract=0
+for name in $stage_list; do
+  f="skills/$name/SKILL.md"
+  [ -f "$f" ] || continue
+  if ! grep -q 'references/skill-loading-contract.md' "$f"; then
+    bad "$f 缺加载契约指针"
+    missing_contract=1
+  fi
+  if ! grep -q '^requires_skills:' "$f"; then
+    bad "$f 缺 requires_skills 声明"
+  fi
+done
+[ "$missing_contract" -eq 0 ] && say "contract OK"
+
+# ---- 4. 禁止项：本机态文件不得入库 ----
+if git ls-files --error-unmatch helm-workflow.local.yaml >/dev/null 2>&1; then
+  bad "helm-workflow.local.yaml 被纳入版本控制（应为本机态）"
+fi
+
+if git diff --cached --name-only 2>/dev/null | grep -q '^helm-workflow\.local\.yaml$'; then
+  bad "暂存区含 helm-workflow.local.yaml"
+fi
+
+# 内网标识扫描不在本 hook 重复实现：node scripts/verify.mjs 已按 git ls-files 全集扫描，
+# 豁免精确到单文件。两份正则并存必然漂移，最后总有一份漏掉新写法。
+# 需要额外追加本机镜像域名时用环境变量 HELM_BLOCKED_DOMAINS，不写进任何文件。
+if [ -n "${HELM_BLOCKED_DOMAINS:-}" ] && git grep -n -I -i -E "$HELM_BLOCKED_DOMAINS" -- . >/dev/null 2>&1; then
+  bad "检出 HELM_BLOCKED_DOMAINS 中配置的内网域名"
+fi
+
+# ---- 5. 中文文档不得出现 Unicode 替换字符（编码事故）----
+if git grep -n -I $'\ufffd' -- '*.md' '*.yaml' >/dev/null 2>&1; then
+  bad "文档含 U+FFFD 替换字符（编码损坏）"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  say "推送被阻止：先修上面的 FAIL 项，或写明理由后 git push --no-verify"
+  exit 1
+fi
+say "全部通过"
+exit 0

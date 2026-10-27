@@ -1,0 +1,46 @@
+# 复制到 .openspec/changes/<name>/.helm-state.yaml 并按 change 更新
+# 权威字段：本文件是 state 的唯一结构定义；derive 出来的五个旗标一旦写入只读不改。
+
+# ── 执行策略 ────────────────────────────────────────────
+# turbo  | 少往返：延迟编译/延迟 UT/集中审查/零 per-task commit
+# strict | 强隔离：逐 task 编译+审查+（按 auto_commit）commit
+apply_mode: ""                      # turbo | strict（propose S3.5 写入）
+
+# 以下五个旗标由 apply_mode 派生，apply S1.3 写入，后续阶段只读不推导。
+# 任何阶段都不得自行推断，必须以本文件为准。
+effectiveAutoCommit: false
+autoCommitForcedOff: false
+compileDeferred: false
+utDeferred: false
+unifiedVerifyRequired: false
+
+# ── 分支与仓库范围 ──────────────────────────────────────
+branch_name: ""                     # 默认 feature/<change-name>
+target_repos: []                    # 必须非空；apply S1.3 校验
+base_commit: ""
+
+# ── 流程状态 ────────────────────────────────────────────
+current_phase: propose
+complexity_mode: standard
+execution_mode: serial
+active_task: ""
+active_review_stage: design_review
+last_verified_task: ""
+reverse_sync_required: false
+exploration_handoff_path: ""
+design_review_rounds: 0
+design_review_passed: false
+design_review_status: pending       # pending | passed | skipped-by-turbo
+design_review_path: ""
+design_review_verdict: ""
+sprint_state_path: ""
+known_issues: []
+propose_artifacts_complete: false
+user_confirm_apply: false
+verify_complete: false            # archive S2 前置校验；verify 全通过后置 true
+
+# ── 证据风格 ────────────────────────────────────────────
+evidence_style: per-task            # per-task | unified（unifiedVerifyRequired: true 时由 apply 写入 unified）
+
+# ── 外部验收流程：默认 none；接入外部测试平台时改 required，并在 verify 读取
+external_verification: none

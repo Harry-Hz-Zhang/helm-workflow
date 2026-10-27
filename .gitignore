@@ -1,0 +1,121 @@
+# ─────────────────────────────────────────────
+# 1. 宿主生成物（安装后出现在宿主目录里的东西）
+#    这些内容由 canonical 源复制而来，不入库
+# ─────────────────────────────────────────────
+.claude/skills/
+.claude/agents/
+.codebuddy/skills/
+.codebuddy/agents/
+.cursor/skills/
+.cursor/agents/
+.codex/skills/
+.codex/agents/
+.opencode/skills/
+.opencode/agents/
+.agents/skills/
+.agents/agents/
+
+# 安装清单（本机安装态）
+**/.helm-version
+
+# ─────────────────────────────────────────────
+# 2. 本机态（每台机器不同，绝不入库）
+# ─────────────────────────────────────────────
+# 本机配置与黑名单：按通配写，换名字也不会漏（example 不以 .local.yaml 结尾，不受影响）
+*.local.yaml
+helm-workflow.local.yaml
+# 内网术语黑名单：只存在于本机，词表本身就是泄漏，绝不入库
+*.blocklist.local
+helm-workflow.blocklist.local
+
+# 工作台运行态
+.state/
+.helm-state.yaml
+**/sprint-state.json
+**/.workbench.yaml
+**/repos.links.yaml
+
+# 评审报告落盘目录（内容可能含业务代码与路由，绝不入库）
+reviews/
+# 活动 change 下的报告同属评审产物
+.openspec/changes/**/code-review-*.md
+.openspec/changes/**/commit-impact-*.md
+
+# 临时工作目录（init 会在生成的仓库里追加 /temp/）
+temp/
+/temp/
+
+# MCP 与宿主本机配置（会写入业务仓的绝对路径）
+.mcp.json
+**/.mcp.json
+**/mcp.json
+opencode.json
+**/opencode.json
+**/settings.local.json
+**/.codex/config.toml
+# workspace 文件记录本地目录布局，属本机态
+*.code-workspace
+# 项目画像可含业务仓名、构建命令与本地路径
+helm-profile.yaml
+**/profile_override.yaml
+.codebuddy/skills/
+.codebuddy/agents/
+.windsurf/skills/
+.windsurf/agents/
+.clinerules/skills/
+.clinerules/agents/
+.roo/skills/
+.roo/agents/
+.continue/skills/
+.continue/agents/
+.zed/skills/
+.zed/agents/
+.junie/skills/
+.junie/agents/
+.aider/skills/
+.aider/agents/
+
+# 补丁与备份包（常含清理前的旧内容）
+*.patch
+*.diff
+*.bundle
+*.orig
+*.rej
+
+# 代码图谱索引
+.codegraph/
+**/.codegraph/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ─────────────────────────────────────────────
+# 3. 凭据与缓存（安全 + 体积）
+# ─────────────────────────────────────────────
+**/db-config.json
+**/credentials.json
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.cer
+*.jks
+*.keystore
+*.p12
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+.npmrc
+.pypirc
+.netrc
+**/__pycache__/
+*.pyc
+*.log
+node_modules/
+npm-debug.log*

@@ -1,0 +1,9 @@
+---
+description: HELM workflow rule
+globs:
+alwaysApply: true
+---
+- 任何流程性工作先读 `skills/helm-workflow-router/SKILL.md`。
+- 阶段命令只是入口，流程真源在 `skills/`。
+- 提交前必须产出 `### 统一验证` 证据段。
+- 面向用户的中文说明遵守 `references/chat-style-constitution.md`：完整句叙述、先结论后展开、术语先解释；禁止箭头因果链与无主语片段。
