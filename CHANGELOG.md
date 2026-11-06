@@ -5,6 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 新增
+
+- `helm-workflow-propose` 增加 S4.6「design 文档格式闸门」：数据模型固定七列（字段 / 字段含义 / MySQL 数据类型 / 是否非空 / 枚举值 / 关联的表 / 默认值），索引单独成节；配置小节固定四列（键 / 默认值 / 校验或回退 / 为什么必须可配）
+- 配置项节制硬上限：单次 change 新增 YAML 键 ≤ 3 个，布尔开关 ≤ 1 个，禁止预留开关与常量外提；原因与判定口径见 S4.6 C 组
+- `log.md` 新增 `### Design Format Gate` 证据段，记录 `D` / `C` 两组判定与新增键数量
+
+### 变更
+
+- `helm-workflow-design-review` 同步把关：数据模型三列表、七格空缺、枚举未穷举、配置键超限或预留开关 → FAIL
+
 ## [0.0.1] - 2026-10-27
 
 首个公开版本。HELM 是一套带人工闸门的规格驱动交付流程，以 skill 包形式提供，

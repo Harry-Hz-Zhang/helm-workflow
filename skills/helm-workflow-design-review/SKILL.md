@@ -30,6 +30,9 @@ requires_skills: []
    - tasks：原子动词+对象；无高熵 `Implement/Handle/Process` 作主语；🟡/🔴 含 RED/GREEN/ASSERT/DoD；≤3 层、5-9 子任务、独立验证；含「任务依赖关系」小节（依赖图、并行/串行、worktree 分组）
    - proposal ↔ specs ↔ design ↔ tasks 一致性
    - 边界、集成点、错误处理
+   - **design 格式闸门（MUST，见 `helm-workflow-propose` S4.6）**：
+     - 涉及表结构时，「数据模型」是否为七列固定表（字段 / 字段含义 / MySQL 数据类型 / 是否非空 / 枚举值 / 关联的表 / 默认值），七格是否有空缺、枚举是否穷举、索引是否单独成节；用三列表或散文描述 → FAIL
+     - 新增配置键是否 ≤ 3 个，每个键是否有默认值、校验或回退、为什么必须可配；存在预留开关或常量外提 → FAIL
 4. artifact 问题标明必须回写哪个文件
 5. standard 模式最多 2 轮修订后重审
 
@@ -86,3 +89,5 @@ Summary: ...
 
 - 用 `code-reviewer` 路由冒充 design-reviewer
 - 输出以「代码最佳实践」为主而非 artifact
+- 数据模型三列表（列 / 类型 / 说明）或七列有空格，仍判 PASS
+- 配置小节堆满「以后可能要」的开关，仍判 PASS
