@@ -31,8 +31,10 @@ requires_skills: []
    - proposal ↔ specs ↔ design ↔ tasks 一致性
    - 边界、集成点、错误处理
    - **design 格式闸门（MUST，见 `helm-workflow-propose` S4.6）**：
-     - 涉及表结构时，「数据模型」是否为七列固定表（字段 / 字段含义 / MySQL 数据类型 / 是否非空 / 枚举值 / 关联的表 / 默认值），七格是否有空缺、枚举是否穷举、索引是否单独成节；用三列表或散文描述 → FAIL
+     - 涉及表结构时，`design.md` 的「数据模型」是否为四列清单（表名 / DDD 领域 / 设计文档 / 变更类型），指向的设计文档是否已存在且路径落在 `docs/db/<领域>/<业务>.md`；把完整字段表搬进 `design.md`、或文档不存在 → FAIL
+     - 设计文档字段表按 `references/db-design-convention.md` 的 T 组判定：七列固定、枚举逐行 `CODE 含义`、非空只写 `Y` 或留空、通用字段未混入；任一不合规 → FAIL
      - 新增配置键是否 ≤ 3 个，每个键是否有默认值、校验或回退、为什么必须可配；存在预留开关或常量外提 → FAIL
+   - **接口契约闸门（MUST，命中时）**：specs 或 design 提到新增或修改 HTTP 接口时，检查是否写明 `METHOD + PATH`、请求/响应字段、required、错误码与鉴权方式；是否说明 Apifox 同步由谁在何时完成（见 `references/api-contract-convention.md` 第 3 节）。只写「新增一个查询接口」→ FAIL
 4. artifact 问题标明必须回写哪个文件
 5. standard 模式最多 2 轮修订后重审
 
@@ -89,5 +91,7 @@ Summary: ...
 
 - 用 `code-reviewer` 路由冒充 design-reviewer
 - 输出以「代码最佳实践」为主而非 artifact
-- 数据模型三列表（列 / 类型 / 说明）或七列有空格，仍判 PASS
+- 数据模型三列字段表、或设计文档缺失，仍判 PASS
+- 设计文档字段表里出现通用字段、枚举未穷举，仍判 PASS
+- 接口只写「新增查询接口」而不给 METHOD、PATH、请求响应字段，仍判 PASS
 - 配置小节堆满「以后可能要」的开关，仍判 PASS

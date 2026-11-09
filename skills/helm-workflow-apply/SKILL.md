@@ -92,6 +92,41 @@ requires_skills:
 - 进入统一验证前
 
 
+### S1.4 — 工程规范加载（HARD-GATE）
+
+数据库与接口契约这两类改动出错的代价最高，因此在本阶段就要把规范正文读进上下文，而不是等 implementer 自己想起来。
+
+**触发判定**（读 proposal、specs、tasks、design 全文，并 `git diff --name-only` 看已改动文件）：
+
+| 规范 | 触发证据（命中任一即触发） |
+| --- | --- |
+| `references/db-design-convention.md` | 文本命中 `建表\|新建表\|加列\|改列\|删列\|索引\|迁移\|flyway\|数据模型\|字段\|DO\|BO\|Mapper\|Repo\|实体`；或路径命中 `*.sql`、`db/migration/`、`**/mapper/**`、`**/domain/**` |
+| `references/api-contract-convention.md` | 文本命中 `Controller\|接口\|API\|契约\|DTO\|VO\|请求体\|响应体\|错误码\|状态码\|鉴权`；或路径命中 `**/*Controller*.java`、`**/dto/**`、`**/vo/**`、`**/rest/**` |
+
+**动作**：
+
+1. 命中即用 Read 工具读该规范**全文**（不是摘要，不是只看目录）。路径基准见 `references/skill-loading-contract.md` 第 0 节。
+2. 未命中也要显式判定并留痕，禁止静默跳过。
+3. 在下一次写 `log.md` 时追加 `### Convention Loaded` 段（标题逐字），格式固定：
+
+```markdown
+### Convention Loaded
+
+| 规范 | 触发依据 | 加载方式 | 应用到 |
+| --- | --- | --- | --- |
+| `db-design-convention` | Task 2 含「新建订单表」 | Read 全文 | Task 2、Task 5 |
+| `api-contract-convention` | Task 4 改 `OrderController#submit` | Read 全文 | Task 4 |
+```
+
+未触发时该行写 `db: n/a（本次 change 无表结构改动）` 或 `api: n/a（无契约面改动）`，理由不得省略。
+
+**判定**：
+
+- 命中但未读全文 → 收口必失败，不得勾选任何 task。
+- `### Convention Loaded` 段缺失 → 收口必失败。
+- 加载失败（文件不存在）→ **停止**，提示对当前 `AGENT_DIR` 重跑 install。
+
+
 ### S2 — 串行 task 循环(A3)
 
 对每个 `- [ ]` task，**不得**并行多个 implementer。
@@ -141,6 +176,10 @@ requires_skills:
 2. 子代理内强制执行 TDD：**RED**（失败测试+命令）→ **GREEN**（通过）→ **REFACTOR**（或「无」）
 3. 无 RED/GREEN 证据 → 不得进入 review
 
+**规范注入（MUST）**：派发前填写 `templates/implementer.context.md` 的 `{db_convention}` 与 `{api_convention}` 两个占位符。S1.4 命中时写"规范正文路径 + 本 task 必须遵守的条款编号"（例如 `db-design-convention：T1–T11、B1–B2、Q1–Q10、E1–E5`）；未命中写 `null`，不得留空占位符。
+
+**建表类 task 的额外约束（MUST）**：task 含建表、加列、改列、索引或迁移脚本时，implementer 必须先产出 `docs/db/<领域>/<业务>.md` 并据其生成 DDL，顺序不可颠倒；顺序颠倒的实现一律在 S6 规范闸门判失败。
+
 #### S3.5 延迟策略（`compileDeferred` / `utDeferred`）
 
 当 `compileDeferred: true` 或 `utDeferred: true` 时：
@@ -181,9 +220,11 @@ requires_skills:
 
 **读取维度集**：`review_dimensions` 缺失 → 按 `project.kind` 默认（service/library → `[spec, quality, security]`；web/mobile → `[spec, quality, a11y]`；data → `[spec, quality, data]`；infra → `[spec, quality, security, cost]`；docs → `[spec, docs]`；multi → `[spec, quality]`）。
 
+**规范维度自动并入（MUST）**：S1.4 判定命中数据库规范时，把 `db` 并入 `review_dimensions`；命中接口契约规范时，把 `api` 并入。这两个维度不依赖画像声明，一旦触发即必审，理由与依据在 `### Review Evidence` 的 `范围` 列写明。
+
 | 色标 | strict 模式 | turbo 模式 |
 | --- | --- | --- |
-| 🟢 低 | 可跳过。跳过时必须在 log 写 `skipped-lightweight-task: Task <n> — <理由>`；但若 `review_dimensions` 含 `security` 或 `data` 或 `a11y`，MUST 至少审该维度一次 | 不单独审，并入 S4.5 集中审查 |
+| 🟢 低 | 可跳过。跳过时必须在 log 写 `skipped-lightweight-task: Task <n> — <理由>`；但若 `review_dimensions` 含 `security` 或 `data` 或 `a11y` 或 `db` 或 `api`，MUST 至少审该维度一次 | 不单独审，并入 S4.5 集中审查 |
 | 🟡 中 | 1 次独立审查，覆盖 `review_dimensions` 全部维度 | 不单独审，并入 S4.5 |
 | 🔴 高 | 2 次：第一次覆盖 `spec`，第二次覆盖其余全部维度；两次 MUST 由**不同**子代理执行 | 不单独审，并入 S4.5；但集中审查时该 task 的 🔴 项必须单独列出结论，且覆盖 `review_dimensions` 全部维度 |
 
@@ -209,7 +250,7 @@ requires_skills:
 1. **第一次审查（🔴 固定 `spec`；🟡 为全维度）**：派发 `implementation-reviewer` 子代理
    - 工具：`Agent` / `Task`（视宿主可用工具）
    - subagent_type：`implementation-reviewer`（或宿主等价 reviewer persona）
-   - 输入：`templates/reviewer.context.md` 填好的 `{git_diff}` / `{specs}` / `{design}` / `{code_style}` / `{complexity}`
+   - 输入：`templates/reviewer.context.md` 填好的 `{git_diff}` / `{specs}` / `{design}` / `{code_style}` / `{complexity}` / `{conventions}`
    - 输出：子代理返回 `PASS` / `BLOCKED` + Critical / Important / DESIGN_ISSUE 列表
    - 主会话记录子代理 turn ID / 返回原文摘要到 `log.md`
 2. **第二次审查（仅 🔴，覆盖除 `spec` 外的全部维度）**：MUST 派发**另一个**子代理实例
@@ -287,8 +328,15 @@ requires_skills:
 **执行**：
 
 1. 派 **1 次** `implementation-reviewer` 子代理，输入累计 diff + `tasks.md` + `specs/`。
-2. 输出必须覆盖：规格符合性（逐 task）、代码质量（整体）、跨 task 一致性、`review_dimensions` 的**每一个维度**。
+2. 输出必须覆盖：规格符合性（逐 task）、代码质量（整体）、跨 task 一致性、`review_dimensions` 的**每一个维度**（含自动并入的 `db` / `api`）。
 3. 🔴 task 必须在结论中单独列出（不得混在整体结论里）。
+
+**规范维度在集中审查里的口径（MUST）**：
+
+| 维度 | 审查依据 | 最小结论要求 |
+| --- | --- | --- |
+| `db` | `references/db-design-convention.md` 的 X 组自检表 | 逐条给 X1–X9 的 pass/fail，不许写"表设计没问题" |
+| `api` | `references/api-contract-convention.md` 的 K 组门禁 | 逐条给 K13–K20 的 pass/fail，或给出 0.1 不成立的具体原因 |
 
 **证据格式**：
 
@@ -328,7 +376,7 @@ requires_skills:
 
 ### S6 — 收口(A7, A7b)
 
-> **顺序固定为 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8。不得重排、不得跳步。**
+> **顺序固定为 0 → 1 → 2 → 2.5 → 3 → 4 → 5 → 6 → 7 → 8。不得重排、不得跳步。**
 
 0. **证据闸门（MUST，最先校验）**
    - `log.md` 中本 task 必须存在以 `### Review Evidence` 开头的段（前缀匹配；`### Review Evidence Task N` 与 `### Review Evidence Batch` 都算）。
@@ -343,6 +391,23 @@ requires_skills:
 2. **`tasks.md` 双层回写（MUST）**
    - 若同时有 `Task Checklist` 与 `### Task N` 细项，须在同一次编辑中同步顶层 checkbox 与细项 `完成状态` / 子 checkbox；仅改一层 → **停止**；回写后重读 `tasks.md` 确认一致。
    - **本步只做"格式回写"，不勾选 `[x]`**（勾选在第 5 步）。
+
+2.5 **规范闸门（MUST）**
+
+   先重新读取 `log.md` 的 `### Convention Loaded` 段，据此判定本步要跑哪几组检查。
+
+   | 条件 | 必跑检查 | 依据 |
+   | --- | --- | --- |
+   | `db` 已加载 | X1–X9 全跑 | `references/db-design-convention.md` 第 8 节 |
+   | `api` 已加载 | K13–K20 全跑 | `references/api-contract-convention.md` 第 7 节 |
+   | 两者都 `n/a` | 只校验 `### Convention Loaded` 段存在且写了理由 | 本 skill S1.4 |
+
+   判定要点（逐条要给证据行，不许写"已检查"）：
+
+   - **DB**：设计文档路径存在；字段表七列（`字段` / `字段含义` / `mysql中的数据类型` / `是否为非空` / `枚举值` / `关联的表` / `默认值`）；字段表内不出现通用字段七件（`id` / `created_by` / `updated_by` / `created_at` / `updated_at` / `version` / `deleted`）中的任何一行；枚举列逐行 `CODE 含义`；DDL 每列带 `COMMENT`；DDL 无 `FOREIGN KEY`；DDL 有 `DEFAULT CHARSET=utf8mb4`；通用字段在 DDL 里齐全。
+   - **API**：`### Apifox Sync` 段存在；`preflight:` / `schema:` / `validate:` / `readback:` / `authorized:` / `blocked:` 六行都在；变更表覆盖本次 diff 的每个 `METHOD + PATH`；破坏性变更的 `authorized:` 行有用户原话摘要。
+   - 任一 `fail` → **停止**，回 `helm-workflow-implement-task` 补齐。DB / API 的 `fail` 与 review `BLOCKED` 同级：**不得勾选 `[x]`，不得 commit**。
+   - 通过后按上表口径把结论写进本 task 的 `### Review Evidence` 段（`Stage` 列写 `db` 或 `api`，`Verdict` 列写 `PASS` 或 `FAIL → 已修`）。
 
 3. **构建验证（S6.5）**
    - `compileDeferred: true` → **跳过本步**，在事件表写 `Build 证据：待统一验证`，进入第 4 步。
@@ -365,7 +430,7 @@ requires_skills:
    - `result: fail` 或 exit != 0 → **不得勾选任何 task**。
    - `unifiedVerifyRequired: false` → 跳过本步（证据已在第 3 步的 per-task 块里）。
 
-5. **勾选 `[x]`（只能在第 3、4 步通过之后）**
+5. **勾选 `[x]`（只能在第 2.5、3、4 步通过之后）**
    - strict：仅将**当前** task 行 `- [ ]` → `- [x]`（一次一个，不得批量）。
    - turbo：集中审查 PASS + 统一验证 `result: pass` 之后，**一次编辑**批量勾选本 sprint 内的 task；勾完重读 `tasks.md` 确认无遗漏。
    - 任一门禁未通过 → **本条不执行**，task 保持 `- [ ]`。
@@ -452,7 +517,9 @@ requires_skills:
 
 - [ ] master/main 入口经过 Branch Confirm 子流程，未静默硬停
 - [ ] 每完成 task 有 TDD 证据 + log + build exit code 0 证据
-- [ ] 每完成 task 有以 `### Review Evidence` 开头的段，覆盖 `review_dimensions`，且 🔴 的两个子代理 ID 不同
+- [ ] 每完成 task 有以 `### Review Evidence` 开头的段，覆盖 `review_dimensions`（含并入的 `db` / `api`），且 🔴 的两个子代理 ID 不同
+- [ ] `### Convention Loaded` 段存在；`db` / `api` 命中时已读规范全文并注入 implementer
+- [ ] 规范闸门（2.5）通过：DB 设计文档七列且与 DDL 一致、DDL 有 `COMMENT` 与 `utf8mb4` 且无外键；Apifox 有回读证据或无启用依据
 - [ ] `effectiveAutoCommit: true` 时每 task 一个 commit；`autoCommitForcedOff: true` 或 `effectiveAutoCommit: false` 时未触发 git 操作且未打断用户
 - [ ] A1–A8 流程已执行
 - [ ] 无 reviewer 通过前 commit
@@ -475,3 +542,10 @@ requires_skills:
 - 收口前缺少 build exit code 0 证据
 - 构建阻断期间勾选 task `[x]`
 - `autoCommitForcedOff: true` 或 `effectiveAutoCommit: false` 时仍触发 `git commit` 或提示用户 commit、校验工作区干净
+- 有表结构改动却找不到 `docs/db/<领域>/<业务>.md`，或先写 DDL 再反填文档
+- 设计文档字段表里出现 `created_by` / `updated_at` / `deleted` 等通用字段行
+- 枚举列只写「状态枚举」或用数字 CODE
+- 建表语句没有 `COMMENT`、带 `FOREIGN KEY`、或表级没写 `utf8mb4`
+- 改了 Controller / DTO / VO 却不做 Apifox 同步，也不报告权限阻塞
+- 拿 `apifox` 命令返回 `success` 当成写入成功证据，没有回读
+- `### Convention Loaded` 写了 `n/a` 却给不出理由

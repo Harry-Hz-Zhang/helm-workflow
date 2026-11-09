@@ -9,7 +9,20 @@
 
 ### 新增
 
-- `helm-workflow-propose` 增加 S4.6「design 文档格式闸门」：数据模型固定七列（字段 / 字段含义 / MySQL 数据类型 / 是否非空 / 枚举值 / 关联的表 / 默认值），索引单独成节；配置小节固定四列（键 / 默认值 / 校验或回退 / 为什么必须可配）
+- `references/db-design-convention.md`：数据库设计与实体骨架规范。固定五步顺序（建表需求 → 设计文档 → 人工确认 → 建表语句 → 实体骨架），设计文档落盘到 `docs/db/<DDD 领域>/<业务>.md`，字段表七列，通用字段七件由 `BaseModel` 承载且不进文档，建表语句要求 `COMMENT`、表级 `utf8mb4`、无显式外键，实体侧要求 DO / BO / 枚举 / Mapper / Repo / Service / Application 齐全
+- `references/api-contract-convention.md`：API 契约与 Apifox 同步规范。定义契约面触发条件、`.apifox/settings.json` 准备、目标仓 `AGENTS.md` 幂等规则块、七步同步流程、`cli-schema get` + `validate` 写入纪律、破坏性变更授权、权限阻塞处理与接口变更表
+- `templates/db-design-doc.md`：表设计文档骨架，与规范七列逐字对齐
+- `helm-workflow-apply` 新增 S1.4「工程规范加载」与 S6 第 2.5 步「规范闸门」，命中即读规范全文、收口逐条判定，`db` / `api` 自动并入 `review_dimensions`
+- `helm-workflow-implement-task` 新增「工程规范（HARD-GATE）」段与建表任务最小交付面
+- `helm-workflow-review-implementation` 新增 `db` / `api` 两个规范维度审查口径
+- `helm-workflow-verify` 新增「规范复核」与两条文本证据扫描项
+- `helm-workflow-code-review` 与 `templates/code-review-report.md` 增加 `db` / `api` 维度
+- `log.md` 与 `verify` 新增 `### Convention Loaded`、`### Apifox Sync` 两个证据段
+
+### 变更
+
+- `helm-workflow-propose` S4.6 D 组由「design.md 内七列字段表」改为「四列表清单 + 设计文档落盘」：`design.md` 只写表名 / DDD 领域 / 设计文档 / 变更类型，完整字段表落在 `docs/db`，避免同一条规则出现两份会漂移的副本
+- 字段表规则对齐新规范：非空只写 `Y` 或留空、枚举逐行 `CODE 含义`、通用字段不入表、关联表只写表名
 - 配置项节制硬上限：单次 change 新增 YAML 键 ≤ 3 个，布尔开关 ≤ 1 个，禁止预留开关与常量外提；原因与判定口径见 S4.6 C 组
 - `log.md` 新增 `### Design Format Gate` 证据段，记录 `D` / `C` 两组判定与新增键数量
 

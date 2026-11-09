@@ -26,7 +26,7 @@
 
 ## 生效维度与覆盖
 
-> 只保留 `profile.review_dimensions` 命中的维度（未配置 → 按 `project.kind` 派生）；`bug` 行仅在记录到缺陷时保留。
+> 只保留 `profile.review_dimensions` 命中的维度（未配置 → 按 `project.kind` 派生）；`bug` 行仅在记录到缺陷时保留；`db` / `api` 在 diff 触碰表结构或接口契约时强制保留。
 
 | 维度 | 是否覆盖 | 说明 |
 | --- | --- | --- |
@@ -36,6 +36,8 @@
 | `security` | ✅ / — | |
 | `performance` | ✅ / — | |
 | `data` | ✅ / — | |
+| `db` | ✅ / — | 触碰表结构时必填 |
+| `api` | ✅ / — | 触碰接口契约时必填 |
 | `a11y` | ✅ / — | |
 | `docs` | ✅ / — | |
 | `cost` | ✅ / — | |

@@ -92,11 +92,15 @@ diff 为空且未给路径 → 输出一行 `无可审查改动（scope=<scope>�
 | `security` | 注入、越权、密钥、日志泄漏、依赖风险 | 拼接 SQL、硬编码凭据、明文打日志 |
 | `performance` | 复杂度、N+1、无界循环、重复 IO | 循环内查询、全量加载、无缓存 |
 | `data` | 迁移可逆性、事务边界、并发写、幂等 | 无回滚、非幂等重试、丢失更新 |
+| `db` | 设计文档与 DDL 是否逐字一致、通用字段、枚举、索引与注释 | 文档缺项、DDL 少 `COMMENT`、字段表混入 `created_at` |
+| `api` | HTTP 契约与 Apifox 是否一致、是否破坏兼容 | 改了 `required` 没同步、同 METHOD+PATH 重复接口 |
 | `a11y` | 语义标签、键盘可达、对比度 | div 冒充 button、无 aria-label |
 | `docs` | 与行为是否一致、示例是否可跑 | 文档说 A 代码做 B、示例跑不通 |
 | `cost` | 云资源、调用次数、存储增长 | 无 TTL、无分页、每请求建连接 |
 
 **维度覆盖是硬要求**：报告 MUST 为每个生效维度写出一节小结（无问题也要写「无」）。缺一个维度 = 审查未完成。
+
+**`db` / `api` 自动并入**：本次 diff 触碰表结构（`*.sql`、`db/migration/`、`**/mapper/**`、`docs/db/**`）时，`db` MUST 并入生效集；触碰契约面（Controller、DTO/VO、接口路径、请求响应字段）时，`api` MUST 并入生效集。两者与画像声明无关，判定口径分别见 `references/db-design-convention.md` 第 8 节与 `references/api-contract-convention.md` 第 7 节。
 
 **`bug` 缺省不在生效集内**：发现真实缺陷时，若 `bug` 不在生效维度集，仍 MUST 用 `bug` 标签记录（缺陷优先于维度裁剪），并在「生效维度与覆盖」表里补上 `bug` 行、「维度小结」补 `### bug` 节。
 

@@ -61,6 +61,8 @@ fix **继承** `helm-workflow-apply` 的全部策略与门禁，仅以下三处�
 
 其余一致：`apply_mode` 派生（S1.3）、延迟策略（S3.5）、统一验证（S6.8）、`### Skills Loaded` 证据、`target_repos` 闸门、收口顺序（构建 → 统一验证 → 勾选 → commit）。
 
+**工程规范**：apply 的 S1.4（规范加载）与 S6 第 2.5 步（规范闸门）在 fix 中原样继承。修复内容涉及表结构或接口契约时，MUST 先读 `references/db-design-convention.md` 或 `references/api-contract-convention.md`，并在 `log.md` 的 `### Convention Loaded` 段记录；规范闸门未通过时同样不得 commit。
+
 **Reverse Sync**：若修复过程中发现 specs/design 与代码事实不符 → 必须先走 `helm-workflow-reverse-sync`（本文件 S5），并在 `tasks.md` 的对应 task 补 `files:` 字段。
 
 

@@ -333,6 +333,20 @@ HELM 多数纪律是**硬规则**（禁止自动 `push`、禁止自动 `stash`�
 
 前置：artifacts 齐全（standard 还需 design review 通过）、不在 `main` / `master`、`target_repos` 非空。
 
+### 工程规范注入（apply S1.4）
+
+实现阶段有两类改动代价最高，出错后返工面也最大：数据库表结构与 HTTP 接口契约。apply 在开工前会先判定本次改动是否触碰这两块，命中就用 Read 读对应规范全文，并把结论写进 `log.md` 的 `### Convention Loaded` 段；收口时再跑一次规范闸门（S6 第 2.5 步），不通过就既不能勾选 task，也不能 commit。
+
+| 触发证据 | 规范真源 | 收口检查 |
+| --- | --- | --- |
+| 建表、加列、改列、索引、迁移、DO / BO / Mapper / Repo | `references/db-design-convention.md` | X1–X9：设计文档、七列字段表、通用字段、`COMMENT`、无外键、`utf8mb4`、文档与 DDL 一致、实体骨架 |
+| Controller、接口路径、DTO / VO、请求响应字段、错误码、鉴权 | `references/api-contract-convention.md` | K13–K20：`### Apifox Sync` 六行证据、变更表覆盖、schema 校验、回读验证、破坏性变更授权 |
+
+两条规范的要点：
+
+- 数据库侧固定五步顺序：建表需求、数据库设计文档、人工检查确认、建表语句、实体骨架。设计文档落在目标仓 `docs/db/<DDD 领域>/<业务>.md`，字段表固定七列，通用字段（`id`、`created_by`、`updated_by`、`created_at`、`updated_at`、`version`、`deleted`）不写进文档但必须写进 DDL，由 `BaseModel` 统一承载。
+- 接口侧要求契约与 Apifox 同步：先检索后新建，写入前必须 `cli-schema get` 加 `cli-schema validate`，写入后必须回读，破坏性变更先取用户授权，权限受限就报告阻塞而不是跳过。
+
 ## 4.6 `/helm:apply-sprint`
 
 **目标**：可恢复的长流程实现，断点写 `sprint-state.json`。
@@ -465,8 +479,8 @@ helm-workflow/                   # 本 Git 仓库
 ├── .cursor/ .opencode/          # flat 风格（/helm-apply）
 ├── .codex/                      # workflow 风格（自然语言）
 ├── .github/                     # prompts + instructions（Copilot）
-├── templates/                   # change 制品模板
-├── references/                  # 加载契约、表达宪法、工作台解析、编排范式、安装说明
+├── templates/                   # change 制品模板（含 db-design-doc.md 表设计文档骨架）
+├── references/                  # 加载契约、表达宪法、工作台解析、编排范式、数据库与接口规范、安装说明
 ├── scripts/                     # CLI、安装器、校验器、宿主矩阵、单元测试
 ├── install.sh / install.ps1     # 一键安装
 ├── helm-workflow.local.example.yaml

@@ -117,7 +117,7 @@ requires_skills:
    - 任一校验失败 → **停止**，不得标 `propose_artifacts_complete`，回到 task 重新拆解
 8. 初始化/更新 `log.md`、`.helm-state.yaml`（`current_phase: propose`）
 9. 复杂度防偷懒校验（见 `helm-workflow-router`）
-10. **design 文档格式（MUST）**：涉及表结构或新增配置项时，`design.md` 必须过 S4.6 闸门；格式不合规视同 artifacts 未完成
+10. **design 文档格式（MUST）**：涉及表结构或新增配置项时，`design.md` 必须过 S4.6 闸门；涉及表结构时还要求 `docs/db/<领域>/<业务>.md` 已落盘（用 `templates/db-design-doc.md` 起稿）。格式不合规视同 artifacts 未完成
 
 ### S4.5 tasks 可执行性闸门（MUST）
 
@@ -180,42 +180,39 @@ requires_skills:
 
 ### S4.6 — design 文档格式闸门（MUST）
 
-本闸门只管两件反复返工的事：**表结构怎么写**、**配置项写多少**。两者都按固定表格与硬上限判定，评审逐格比对，不靠印象。
+本闸门只管两件反复返工的事：**表结构怎么落盘**、**配置项写多少**。前者以 `references/db-design-convention.md` 为真源，后者按本节 C 组判定。设计字段表不再写进 `design.md`，避免同一条规则出现两份会各自漂移的副本。
 
-- 触发条件：只要 proposal/specs 提到新建表、加列、改列、删列，或新增任何 YAML 配置键，`design.md` 就必须过本闸门。
-- 判定结果写入 `log.md` 的 `### Design Format Gate` 段：`D: pass|fail`、`C: pass|fail`、新增配置键数量。
+- 触发条件：只要 proposal/specs 提到新建表、加列、改列、删列、索引或迁移脚本，或新增任何 YAML 配置键，`design.md` 就必须过本闸门。
+- 判定结果写入 `log.md` 的 `### Design Format Gate` 段：`D: pass|fail`、`C: pass|fail`、新增配置键数量、新增或变更的表数量，以及 `conventions: db-design-convention`（未触发表结构时写 `db: n/a`）。
 - 任一为 `fail` → **停止**，不得进入 S5，不得标 `propose_artifacts_complete`。
 
-#### D 组 — 数据库表固定七列
+#### D 组 — 表清单指向设计文档
 
-`design.md` 的「数据模型」小节 MUST 按**七列固定顺序**逐字段列出：`字段`、`字段含义`、`MySQL 数据类型`、`是否非空`、`枚举值`、`关联的表`、`默认值`。列名与顺序不得改动，一张表一个表格。
+判定前 MUST 先读 `references/db-design-convention.md` 全文；本组只判"清单是否指向合规文档"，字段级规则一律引用该文件的编号，不在本 skill 复述。
+
+`design.md` 的「数据模型」小节 MUST 是一张**表清单**，四列固定顺序：`表名`、`DDD 领域`、`设计文档`、`变更类型`。每个字段一行一条记录，完整字段表写在设计文档里。
 
 | # | 规则 | 判定口径 |
 | --- | --- | --- |
-| D1 | 只用这七列 | 出现「列 / 类型 / 说明」三列表、把字段写成散文、或只在 tasks 里写 DDL → FAIL |
-| D2 | 七格不得空缺 | 不适用写 `-` 并在同格补一句理由，如 `-（无外键）`；空格视为未写 → FAIL |
-| D3 | 字段列 MUST 是库内真实列名 | 主键、审计列、软删列、乐观锁列同样逐行列，禁止用「沿用 BaseModel」一句带过 |
-| D4 | 字段含义 MUST 写业务语义 | 与列名同义反复（「状态：状态」）、只写「见代码」「同上」 → FAIL |
-| D5 | MySQL 数据类型 MUST 带长度或精度 | `varchar(36)`、`decimal(12,2)`、`datetime(3)`、`tinyint(1)`；写 `string`/`int`/`日期` → FAIL |
-| D6 | 是否非空只写 `是` 或 `否` | 写 `否` 时，字段含义里 MUST 说明空值语义（未知 / 不适用 / 未开始） |
-| D7 | 枚举值 MUST 穷举 | 形如 `PENDING / PULLING / SUCCEEDED / FAILED`，并说明用 CHECK 约束还是应用层校验；非枚举列写 `-（非枚举）` |
-| D8 | 关联的表 MUST 写 `表名.字段` | 无关联写 `-（无外键，关系由应用层维护）`；只写「关联镜像表」这种模糊表述 → FAIL |
-| D9 | 默认值 MUST 写 DDL 原文 | `0`、`NULL`、`CURRENT_TIMESTAMP(3)`；非空且写入方必填写 `-（写入方必填）` |
-| D10 | 索引 MUST 单独成节 | 每行一个 UNIQUE / KEY 并写明用途；索引不得混进字段表 |
+| D1 | 只用这四列 | 出现「列 / 类型 / 说明」三列字段表、把字段写成散文、把完整七列表搬进 `design.md` → FAIL |
+| D2 | 每张表恰好一行 | 同一表名重复出现、或用「订单相关表」这种集合表述 → FAIL |
+| D3 | 设计文档列是可解析路径 | 形如 `docs/db/order/order.md`，相对目标业务仓根；写「见代码」「稍后补」→ FAIL |
+| D4 | 设计文档在 propose 阶段就已存在 | 文件不存在 → FAIL（建表需求必须先落文档，再进入 apply 出 DDL） |
+| D5 | 领域目录符合 DDD 划分 | 同一领域的表文档在同一目录；把所有表塞进 `docs/db/` 根目录 → FAIL |
+| D6 | 变更类型明确 | 取值 ∈ {新建, 加列, 改列, 删列, 索引, 无结构变更}；写「调整一下」→ FAIL |
+| D7 | 文档内字段表合规 | 按 `references/db-design-convention.md` 的 T1–T11 逐条判定，任一 FAIL 即本组 FAIL |
+| D8 | 通用字段未混入文档 | 字段表出现 `id` / `created_by` / `updated_by` / `created_at` / `updated_at` / `version` / `deleted` 任一行 → FAIL（B1） |
+| D9 | 枚举列逐行 `CODE 含义` | 用数字当 CODE、只写「状态枚举」、或压成一行用 `/` 分隔 → FAIL（T6 / T7） |
+| D10 | 索引小节与迁移计划齐全 | 文档有「索引」小节；`design.md` 写明迁移脚本命名（`V<yyyyMMddHHmm>__<desc>.sql`）与执行顺序 → 缺任一 FAIL |
 
-骨架示例（照抄结构、逐行替换内容，不要增删列）：
+`design.md` 的数据模型小节骨架（照抄结构，不要增删列）：
 
-| 字段 | 字段含义 | MySQL 数据类型 | 是否非空 | 枚举值 | 关联的表 | 默认值 |
-| --- | --- | --- | --- | --- | --- | --- |
-| id | 自增主键 | bigint | 是 | -（非枚举） | -（无外键） | -（自增） |
-| image_uuid | 归属镜像的对外标识 | varchar(36) | 是 | -（非枚举） | `svc_runner_image.image_uuid` | -（写入方必填） |
-| pull_status | 拉取状态，终态不再变更 | varchar(16) | 是 | PENDING / PULLING / SUCCEEDED / FAILED，应用层校验 | -（无外键） | PENDING |
-| error_message | 失败原因，成功时为空 | varchar(500) | 否 | -（非枚举） | -（无外键） | NULL |
+| 表名 | DDD 领域 | 设计文档 | 变更类型 |
+| --- | --- | --- | --- |
+| `t_order` | order | `docs/db/order/order.md` | 新建 |
+| `t_order_item` | order | `docs/db/order/order_item.md` | 新建 |
 
-索引（另起小节，逐行写）：
-
-- `UNIQUE KEY uk_xxx (xxx_uuid)`
-- `KEY idx_xxx_status (status, created_at)`，供取队首与收敛扫描
+设计文档骨架见 `templates/db-design-doc.md`；字段表七列、通用字段七件、建表语句与实体骨架的规则全部以 `references/db-design-convention.md` 为准。
 
 #### C 组 — 配置项节制（resources 下的 YAML）
 
@@ -244,8 +241,10 @@ AI 写 design 的通病是把所有常量都提成配置项，产出一屏没人
 
 | 检查项 | 位置 | 问题 | 修改建议 |
 | --- | --- | --- | --- |
-| D1 | 数据模型 | 用了「列 / 类型 / 说明」三列表 | 改为七列固定表，补「是否非空 / 枚举值 / 关联的表 / 默认值」 |
-| D7 | 数据模型 pull_status | 写「状态枚举」未列取值 | 改为 `PENDING / PULLING / SUCCEEDED / FAILED` 并说明校验位置 |
+| D1 | 数据模型 | 把完整字段表搬进了 `design.md` | 改为四列清单（表名 / DDD 领域 / 设计文档 / 变更类型），字段表移到设计文档 |
+| D4 | 数据模型 `t_order` | 设计文档 `docs/db/order/order.md` 不存在 | 先用 `templates/db-design-doc.md` 产出文档，再进入 apply 出 DDL |
+| D8 | 设计文档 `t_order` | 字段表出现 `created_at` / `deleted` | 删掉通用字段七件，通用字段只在 DDL 与 `BaseModel` 出现 |
+| D9 | 设计文档 `t_order.status` | 写「状态枚举」未列取值 | 改为逐行 `WAIT_PAY 待支付,` `PAID 已支付`，并说明应用层校验 |
 | C2 | 配置 | 新增 5 个键 | 砍到 3 个以内，其余改为常量；保留下来的逐键写明为什么必须可配 |
 ```
 
@@ -272,7 +271,8 @@ AI 写 design 的通病是把所有常量都提成配置项，产出一屏没人
 - [ ] standard：`design_review_passed: true` 后才可确认 apply
 - [ ] handoff 已升格或记录在 log
 - [ ] `apply_mode` 已写入 `.helm-state.yaml` 与 `tasks.md` 顶部，且两处一致
-- [ ] 涉及表结构时，数据模型为七列固定表（字段 / 字段含义 / MySQL 数据类型 / 是否非空 / 枚举值 / 关联的表 / 默认值），无空格、无三列表
+- [ ] 涉及表结构时，`design.md` 数据模型是四列清单（表名 / DDD 领域 / 设计文档 / 变更类型），字段表落在 `docs/db/<领域>/<业务>.md`
+- [ ] 设计文档在 propose 阶段已存在，且字段表合规（七列、枚举逐行 `CODE 含义`、通用字段未混入）
 - [ ] 新增配置键 ≤ 3 个，每个键有默认值、校验或回退、为什么必须可配
 - [ ] `log.md` 含 `### Design Format Gate`，且 `D: pass`、`C: pass`
 
@@ -287,7 +287,9 @@ AI 写 design 的通病是把所有常量都提成配置项，产出一屏没人
 - 🟡/🔴 task 的 RED 不含 mock 输入与期望（implementer 又得做一次设计判断）
 - 🟡/🔴 task 的 RED 条目数 < 5（5 类场景未穷举）
 - ASSERT 段空或仅写"全部转绿"
-- 数据模型用「列 / 类型 / 说明」三列表，或漏掉「是否非空 / 枚举值 / 关联的表 / 默认值」
-- 枚举列只写「状态枚举」不穷举取值
+- 把完整字段表搬进 `design.md`，或只写「数据模型见代码」
+- 有建表需求却没有 `docs/db` 设计文档就进 apply
+- 设计文档字段表里出现 `created_by` / `updated_at` / `deleted` 这类通用字段
+- 枚举列只写「状态枚举」不穷举取值，或用数字当 CODE
 - 把常量、超时、路径逐条提成 YAML 配置键，或为「以后可能要」预留开关
 - 配置小节只有键名与默认值，没有校验与「为什么必须可配」

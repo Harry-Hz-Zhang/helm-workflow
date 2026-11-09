@@ -14,9 +14,28 @@ requires_skills:
 
 ## Context placeholders
 
-主会话填充：`{task}`, `{acceptance_criteria}`, `{specs}`, `{design}`, `{code_style}`, `{debugging_guide}`（见 `templates/implementer.context.md`）。
+主会话填充：`{task}`, `{acceptance_criteria}`, `{specs}`, `{design}`, `{code_style}`, `{debugging_guide}`, `{db_convention}`, `{api_convention}`（见 `templates/implementer.context.md`）。
 
 **占位符替换硬约束（MUST）**：dispatch 前主会话**禁止**保留任何 `{xxx}` 形式的未替换占位符；若某值不可得，须以 `""` 或 `null` 显式标注。Commit message 不在 implementer 职责内（由主会话在 commit gate 自行生成）。
+
+## 工程规范（HARD-GATE）
+
+数据库与接口契约的规范正文不在本文件里重写，只看两个真源。主会话在 apply S1.4 判定命中后会把条款编号传给 `{db_convention}` / `{api_convention}`；本 task 命中而占位符为 `null` 时，implementer MUST 自己读规范全文，并返回 `REVERSE_SYNC_REQUIRED`（原因写 `规范未注入`），不得凭记忆实现。
+
+| 命中条件 | 必读真源 | 本 task 的硬约束 |
+| --- | --- | --- |
+| 建表、加列、改列、索引、迁移脚本、DO / BO / Mapper / Repo | `references/db-design-convention.md` | 先落 `docs/db/<领域>/<业务>.md`，再据文档写 DDL，再搭实体骨架；通用字段不进文档但进 DDL；不建外键；表级 `utf8mb4`；表与每列都有 `COMMENT` |
+| Controller、接口路径、method、DTO / VO、request / response、错误码、鉴权 | `references/api-contract-convention.md` | 走完 7 步流程；`create` / `update` 前必须 `cli-schema get` + `validate`；写后必须回读；破坏性变更先要授权；被权限阻塞要报告而不是跳过 |
+
+**建表任务的最小交付面（MUST，缺一即返回 BLOCKED）**：
+
+1. 设计文档（七列固定表 + 索引小节 + 变更记录）。
+2. flyway 迁移脚本（命名 `V<yyyyMMddHHmm>__<snake_case>.sql`，含通用字段与 `COMMENT`）。
+3. `BaseModel`（工程已有则复用，不得重复造）。
+4. `XxxDO` / `XxxBO` / 枚举类。
+5. `XxxMapper` / `XxxRepo`(+Impl) / `XxxService` / `XxxApplication` 骨架，覆盖基础 CRUD。
+
+**不允许的省事做法**：只写 DO 与 Mapper 就收口；把文档推迟到"下次补"；用 `sql` 里的 `COMMENT` 代替设计文档；在 Controller 里直接返回 DO。
 
 ## 执行体矩阵
 
@@ -58,6 +77,7 @@ requires_skills:
 - 实现说明
 - 自检 checklist
 - TDD 证据（RED/GREEN/REFACTOR）
+- 规范证据（命中时）：DB 写设计文档路径 + 迁移脚本路径 + 实体骨架清单；API 写 `### Apifox Sync` 六行（见规范第 6 节）
 
 失败时：
 
@@ -72,8 +92,14 @@ requires_skills:
 
 - [ ] 有失败测试证据后才写实现
 - [ ] 测试通过且未超出 task 范围
+- [ ] 命中数据库规范时：设计文档先生成，DDL 与文档一致，通用字段在 DDL 中齐全
+- [ ] 命中接口契约规范时：`### Apifox Sync` 六行齐全且已回读
 
 ## Red flags
 
 - task 标注「无需测试」仍跳过 TDD
 - 先写实现后补测试
+- 先写 `CREATE TABLE` 再补设计文档，或用「文档下次补」推迟
+- 设计文档里列了 `created_at` / `deleted` 这类通用字段
+- 建表语句漏 `COMMENT`、带外键、或没写 `utf8mb4`
+- 改了 Controller 直接收口，既不同步 Apifox 也不报告阻塞

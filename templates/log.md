@@ -35,6 +35,30 @@
 | `helm-workflow-router` | 本地 | Skill 工具 |
 | `helm-workflow-chat-style` | 本地 | Skill 工具 |
 
+### Convention Loaded
+
+| 规范 | 触发依据 | 加载方式 | 应用到 |
+| --- | --- | --- | --- |
+| `db-design-convention` | `<Task N 含「新建订单表」>` | Read 全文 | `<Task N>` |
+| `api-contract-convention` | `<Task N 改 OrderController#submit>` | Read 全文 | `<Task N>` |
+
+> 未触发时本段写一行即可：`db: n/a（本次 change 无表结构改动）` 或 `api: n/a（无契约面改动）`，理由不得省略。
+> 规范正文：`references/db-design-convention.md`、`references/api-contract-convention.md`。
+
+### Apifox Sync
+
+- project: `<projectId>`
+- preflight: `<apifox auth status 与 endpoint list 结果>`
+- existing: `<METHOD PATH → 接口 ID 或 none>`
+- schema: `<cli-schema get 落盘路径>、<update 用的完整 JSON 路径>`
+- validate: `<cli-schema validate 结果>`
+- write: `<create/update 的对象与返回>`
+- readback: `<endpoint get/list 回读结果>`
+- authorized: `<破坏性变更的用户原话摘要，或 ->`
+- blocked: `<权限阻塞原文摘要，或 ->`
+
+> `authorized:` 与 `blocked:` 两行 MUST 出现，无内容写 `-`。未启用契约规范时整段写 `api: n/a（<原因>）`。
+
 ### Review Evidence
 
 | Stage | Subagent ID | Verdict | 范围 |

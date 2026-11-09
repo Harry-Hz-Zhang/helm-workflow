@@ -42,9 +42,17 @@ Canonical 编排入口：OpenSpec artifacts 事实源、复杂度分层、init +
 | status | `helm-workflow-status` | — |
 | auto | `helm-workflow-auto` | 按 apply 的门禁规则串行编排；不重复定义 Build Gate |
 
-4. **横切**（两档）：
+4. **横切**（三档）：
    - 常驻：`helm-workflow-chat-style`（任何面向用户的输出都受其约束，见「输出表达」）
    - 按需：`helm-workflow-reverse-sync`、`helm-workflow-git-discipline`
+   - 工程规范（**不是 skill**，命中即用 Read 读全文，加载门禁在 `helm-workflow-apply` S1.4）：
+
+     | 触发证据 | 真源 | 作用 |
+     | --- | --- | --- |
+     | 建表、加列、改列、索引、迁移、DO / BO / Mapper / Repo | `references/db-design-convention.md` | 设计文档七列、通用字段、建表语句、实体骨架 |
+     | Controller、接口路径、DTO / VO、请求响应字段、错误码、鉴权 | `references/api-contract-convention.md` | Apifox 同步流程、写入纪律、破坏性变更授权 |
+
+     这两份规范在 propose、apply、fix、verify、code-review 里都会被引用；只有注入点写在不同阶段，规则本身不重复。改规范只改这两份文件。
 5. 复杂度防偷懒：>5 个 task 全 🟢 → 复查；新建 Mapper/Service → 最低 🟡；跨模块 → 🔴
 
 ## 代码理解与影响分析

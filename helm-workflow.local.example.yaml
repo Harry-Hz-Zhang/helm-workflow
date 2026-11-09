@@ -59,7 +59,7 @@ explore_max_concurrency: 5
 codegraph_max_concurrency: 2
 
 # ── 项目画像（YAML 顶层键 profile）──────────────────────────────────────────
-# 真源：项目画像 23 键（键名与默认值见下）。
+# 真源：项目画像 25 键（键名与默认值见下）。
 # 加载顺序（后者覆盖前者，逐键合并，不整体替换）：
 #   内置默认表 → `helm-profile.yaml` → 本文件的画像段 → 本文件的 profile_override 段
 # 缺键不报错：按下列"缺失时默认"生效，并在 log 留痕（格式 `<key> = <default> (default applied)`）。
@@ -93,6 +93,8 @@ codegraph_max_concurrency: 2
 #   state_dir: .state                                          # 缺失时默认：.state
 #   evidence_style: per-task                                   # 缺失时默认：per-task；unifiedVerifyRequired: true → unified
 #   feature_date_granularity: "YYYY"                           # 缺失时默认：YYYY（YYYY/YYYYMM/none）
+#   db_doc_root: docs/db                                       # 缺失时默认：docs/db（表设计文档根，见 references/db-design-convention.md）
+#   api_contract: auto                                         # 缺失时默认：auto（auto：有 .apifox/settings.json 即启用；none：关闭；apifox：强制启用）
 #
 # profile_override:                                            # 本机临时覆盖：同名键逐层覆盖画像段（不入库）
 #   build_command: null

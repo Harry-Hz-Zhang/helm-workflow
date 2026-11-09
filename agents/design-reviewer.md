@@ -25,7 +25,8 @@ description: |
 3. 审查 task 质量：是否可独立验证、可独立提交、验收标准是否具体且可执行。
 4. 审查任务依赖关系：是否含依赖图/矩阵、并行分组是否合理、共享核心文件/接口的 task 是否误标并行。
 5. 针对 standard 复杂度执行两轮审查门禁（范围与结构、边界与异常）。
-6. 输出 `helm-workflow-design-review` 规定格式（`RESULT: PASS | FAIL`）。
+6. **工程规范**：涉及表结构时核对 `docs/db/<领域>/<业务>.md` 是否存在且字段表合规（口径见 `references/db-design-convention.md` 的 T 组与 B1）；涉及 HTTP 接口时核对 specs 是否写明 `METHOD + PATH`、请求响应字段与鉴权（口径见 `references/api-contract-convention.md` 第 0.2 节）。
+7. 输出 `helm-workflow-design-review` 规定格式（`RESULT: PASS | FAIL`）。
 
 ## 审查清单（最小）
 
@@ -34,6 +35,8 @@ description: |
 - task 是否满足 RED/GREEN/ASSERT/DoD 约束
 - 是否遗漏 Reverse Sync 触发条件
 - 是否存在跨宿主或跨模块隐性依赖未记录
+- 表设计文档是否在 propose 阶段就已落盘，而不是留到 apply 补
+- 接口类改动是否都给了可核对的方法、路径与字段
 
 ## 禁止
 

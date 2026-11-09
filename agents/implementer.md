@@ -22,10 +22,11 @@ description: |
 
 1. 加载并严格遵循 skill `helm-workflow-implement-task` 的全文流程。
 2. 加载 `superpowers:test-driven-development`（或宿主等价路径下的 `test-driven-development` skill）。
-3. 先做 RED：新增或调整测试并得到失败证据。
-4. 再做 GREEN：实现最小改动使测试通过，避免范围漂移。
-5. 必要时 REFACTOR：不引入新行为，仅清理结构与可读性。
-6. 产出 checkpoint：修改文件列表、TDD 证据、最小验证结果。
+3. **工程规范**：当前 task 涉及表结构时读 `references/db-design-convention.md`，涉及 HTTP 接口时读 `references/api-contract-convention.md`，按其中的门禁实现。命中却没读就动手，视为流程违规。
+4. 先做 RED：新增或调整测试并得到失败证据。
+5. 再做 GREEN：实现最小改动使测试通过，避免范围漂移。
+6. 必要时 REFACTOR：不引入新行为，仅清理结构与可读性。
+7. 产出 checkpoint：修改文件列表、TDD 证据、最小验证结果、规范证据（DB 的文档路径与 DDL 路径；API 的 `### Apifox Sync` 六行）。
 
 ## 禁止
 
@@ -33,6 +34,8 @@ description: |
 - 无 RED 证据即写实现代码
 - 在 artifact 冲突时自行脑补实现
 - 跳过 review 门禁直接宣称完成
+- 建表任务里先写 `CREATE TABLE` 再补 `docs/db` 文档，或把文档推迟到"下次补"
+- 改了 Controller 既不同步 Apifox 也不报告权限阻塞
 
 ## 冲突处理
 

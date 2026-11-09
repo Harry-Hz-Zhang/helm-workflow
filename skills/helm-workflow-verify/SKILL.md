@@ -70,6 +70,20 @@ requires_skills:
    - **checkbox 协议**：若仅用 `### Task` / 行内 ``完成状态：`[ ]` `` 而无行首 checkbox → Critical（与 OpenSpec/HELM apply 不兼容）
    - **commit 粒度**（standard）：`base_commit..HEAD` commit 数与 `- [x]` task 数严重不符（如 9 个 task 仅 1 个实现 commit）→ **Warning**（流程债务）；log 无 per-task TDD 段 → Critical（🟡/🔴）
    - sprint：`sprint-state.json` checkpoints 数应与 completed task 一致（偏差 → Warning）
+   - **工程规范**：见下节「规范复核」（`db` / `api` 命中时逐条判）
+
+### 规范复核（MUST）
+
+先读 `log.md` 的 `### Convention Loaded` 段，再按命中项逐条判定。
+
+| 命中 | 必查 | 缺证据时的等级 |
+| --- | --- | --- |
+| `db` | `docs/db/<领域>/<业务>.md` 存在；七列固定表；通用字段未混入文档；DDL 有 `COMMENT` / `utf8mb4` / 无 `FOREIGN KEY`；DO 继承 `BaseModel`；枚举类与文档一致；四层骨架齐全 | **Critical**（表结构与文档不一致属于交付物缺失，不是风格问题） |
+| `api` | `### Apifox Sync` 段存在；六行（`preflight` / `schema` / `validate` / `readback` / `authorized` / `blocked`）齐全；变更表覆盖 diff 里的每个 `METHOD + PATH`；破坏性变更有授权 | **Critical**（契约漂移会让下游生成代码出错） |
+| 明确 `n/a` | 理由成立（`api_contract: none`、无 `.apifox/settings.json`、CLI 不可用、本次无表结构或无契约面改动） | 理由不成立 → **Warning**；理由缺失 → **Critical** |
+
+`db` / `api` 的判定口径以 `references/db-design-convention.md` 第 8 节与 `references/api-contract-convention.md` 第 7 节为准，本 skill 不复述规则。
+
 
 ### 证据归一化（MUST，先于一切判定）
 
@@ -130,6 +144,8 @@ requires_skills:
 - `### Skills Loaded`
 - 以 `### Review Evidence` 开头的段（前缀匹配：`### Review Evidence` / `### Review Evidence Task N` / `### Review Evidence Batch` 任一即可）
 - `### Verification Evidence` 或 `### Build Evidence Task` 或 `### 统一验证`
+- `### Convention Loaded`
+- `### Apifox Sync`（仅 `api` 命中时要求）
 - `### Resolution`
 
 `- exit code: 0` MUST NOT 单独作为"验证已执行"的证据（旧格式下它只是结果行之一，需与命令行配对）。
@@ -161,6 +177,7 @@ requires_skills:
 - [ ] base_commit 来自 state 或已说明
 - [ ] 未在无证据时宣称可 archive
 - [ ] `external_verification: none` 时报告不含外部验收小节
+- [ ] `db` / `api` 命中时已按「规范复核」逐条判定，未用一句话代替
 
 ## Red flags
 
@@ -168,3 +185,5 @@ requires_skills:
 - 有 Critical 仍建议直接 archive
 - 未读 diff 即标 PASS
 - `external_verification: none` 时仍调用外部验收平台
+- 有建表改动但没打开 `docs/db` 文档就判"一致性通过"
+- 有接口改动但没比对 `### Apifox Sync` 就判"契约一致"

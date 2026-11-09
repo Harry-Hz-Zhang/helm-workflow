@@ -25,13 +25,16 @@ const TEMPLATES = [
   'reviewer.context.md',
   'sprint-state.example.json',
   'code-review-report.md',
-  'commit-impact-report.md'
+  'commit-impact-report.md',
+  'db-design-doc.md'
 ];
 const REFERENCES = [
   'skill-loading-contract.md',
   'chat-style-constitution.md',
   'workbench-resolution.md',
   'orchestration-patterns-helm.md',
+  'db-design-convention.md',
+  'api-contract-convention.md',
   path.posix.join('installation', 'hosts-config.md'),
   path.posix.join('installation', 'instructions-snippet.md')
 ];
@@ -176,7 +179,9 @@ const CHAT_STYLE_SURFACES = [
 ];
 const EVIDENCE_LITERALS = [
   '### Skills Loaded',
+  '### Convention Loaded',
   '### Review Evidence',
+  '### Apifox Sync',
   '### 统一验证',
   '- 统一验证 UT:',
   '- exit code: 0',
